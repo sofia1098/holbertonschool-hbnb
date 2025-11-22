@@ -2,30 +2,27 @@ from app.models.base_model import BaseModel
 from app.models.user import User
 from app import db
 
-
- place_amenity = db.Table(
-     'place_amenity',
-     db.Column('place_id', db.String(36), db.ForeignKey('places.id'), primary_key=True),
-     db.Column('amenity_id', db.String(36), db.ForeignKey('amenities.id'), primary_key=True)
- )
+# Tabla intermedia Place <-> Amenity
+place_amenity = db.Table(
+    'place_amenity',
+    db.Column('place_id', db.String(36), db.ForeignKey('places.id'), primary_key=True),
+    db.Column('amenity_id', db.String(36), db.ForeignKey('amenities.id'), primary_key=True)
+)
 
 class Place(BaseModel):
     """Place entity class."""
 
-
     __tablename__ = 'places'
 
-    _title = db.Column(db.String(50), nullable=False)
-    _description = db.Column(db.Text, nullable=False)
-    _price = db.Column(db.Float, nullable=False)
-    _latitude = db.Column(db.Float, nullable=False)
-    _longitude = db.Column(db.Float, nullable=False)
-    # Faltan Columnas
+    title = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    latitude = db.Column(db.Float, nullable=False)
+    longitude = db.Column(db.Float, nullable=False)
 
     # FOREIGNKEY
-   
     user_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
-    
+
     # Relaciones ORM automáticas
     reviews = db.relationship('Review', backref='place', lazy=True)  # One-to-Many
     amenities = db.relationship(
@@ -35,8 +32,7 @@ class Place(BaseModel):
         lazy='subquery'
     )
 
-
-    def __init__(self, title: str, description: str, price: float, latitude: float, longitude: float, owner: User, user_id):
+    def __init__(self, title: str, description: str, price: float, latitude: float, longitude: float, owner: User, user_id: str):
         super().__init__()  # hereda id, created_at, updated_at
         self.title = title
         self.description = description
@@ -45,18 +41,27 @@ class Place(BaseModel):
         self.longitude = longitude
         self.owner = owner
         self.user_id = user_id
-   
 
+    # Validaciones
     @property
     def title(self):
         return self._title
-    
-    
+
     @title.setter
     def title(self, value):
         if not value:
             raise ValueError("Title cannot be empty")
         self._title = value
+
+    @property
+    def description(self):
+        return self._description
+
+    @description.setter
+    def description(self, value):
+        if not value or not isinstance(value, str):
+            raise ValueError("Description must be a non-empty string.")
+        self._description = value
 
     @property
     def price(self):
@@ -79,16 +84,6 @@ class Place(BaseModel):
         self._latitude = float(value)
 
     @property
-    def description(self):
-        return self._description
-
-    @description.setter
-    def description(self, value):
-        if not value or not isinstance(value, str):
-            raise ValueError("Description must be a non-empty string.")
-        self._description = value
-
-    @property
     def longitude(self):
         return self._longitude
 
@@ -98,7 +93,7 @@ class Place(BaseModel):
             raise ValueError("Longitude must be between -180 and 180.")
         self._longitude = float(value)
 
-    
+    # Métodos auxiliares
     def update(self, **kwargs):
         for key, value in kwargs.items():
             if hasattr(self, key):
@@ -108,11 +103,10 @@ class Place(BaseModel):
     def add_amenity(self, amenity):
         if amenity not in self.amenities:
             self.amenities.append(amenity)
-        pass
-    
+
     def add_review(self, review):
         if review not in self.reviews:
             self.reviews.append(review)
-    
+
     def __repr__(self):
         return f"<Place {self.title} - Ubicación: {self.latitude}, {self.longitude}>"

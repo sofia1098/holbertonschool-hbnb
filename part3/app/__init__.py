@@ -3,6 +3,7 @@ from flask_restx import Api
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
+from flask_cors import CORS
 
 
 jwt = JWTManager()
@@ -16,7 +17,7 @@ def create_app(config_class="config.DevelopmentConfig"):
     db.init_app(app)
     jwt.init_app(app)
     api = Api(app, version='1.0', title='HBnB API', description='HBnB Application API', doc='/')
-
+    CORS(app, resources={r"/*": {"origins": "*"}})
 
     # Register the users namespace
     from app.api.v1.users import api as users_ns

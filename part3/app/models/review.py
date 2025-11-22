@@ -1,67 +1,36 @@
 from app.models.base_model import BaseModel
-from app.models.user import User
-from app.models.place import Place
 from app import db
-
-# review = db.Table(
-#     'reviews',
-#     db.Column('place_id', db.String(36), db.ForeignKey('places.id'), primary_key=True),
-#     db.Column('amenity_id', db.String(36), db.ForeignKey('.id'), primary_key=True)
-# )
 
 class Review(BaseModel):
     """Review entity class."""
 
     __tablename__ = 'reviews'
 
-    _text = db.Column(db.Text, nullable=False)
-    _rating = db.Column(db.Integer, nullable=False)
-    _user = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
-    _place = db.Column(db.String(36), db.ForeignKey('places.id'), nullable=False)
-
-    @property
-    def text(self):
-        return self._text
-
-    @text.setter
-    def text(self, text):
-        if not text:
-            raise ValueError("Text cannot be empty.")
-        self._text = text
-
-    @property
-    def rating(self):
-        return self._rating
-
-    @rating.setter
-    def rating(self, value):
-        if not 1 <= value <= 5:
-            raise ValueError("Rating must be between 1 and 5.")
-        self._rating = value
+    rating = db.Column(db.Integer, nullable=False)
+    text = db.Column(db.Text, nullable=False)
     
-    @property
-    def user(self): 
-        return self._user
+    user_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
+    place_id = db.Column(db.String(36), db.ForeignKey('places.id'), nullable=False)
 
-    @user.setter
-    def user(self, user):
-        if not isinstance(user, User):
-            raise TypeError("User must be a User instance.")
-        return user
+    # Relaciones ORM usando strings
+    user = db.relationship('User', backref=db.backref('reviews', lazy=True))
+    place = db.relationship('Place', backref=db.backref('reviews', lazy=True))
 
-    @property
-    def place(self):
-        return self._place
+    # Validación
+    def set_rating(self, value):
+        if not isinstance(value, int) or not 1 <= value <= 5:
+            raise ValueError("Rating must be an integer between 1 and 5.")
+        self.rating = value
 
-    @place.setter
-    def place(self, place):
-        if not isinstance(place, Place):
-            raise TypeError("Place must be a Place instance.")
-        return place
+    def set_text(self, value):
+        if not value:
+            raise ValueError("Text cannot be empty.")
+        self.text = value
 
+    # Método para editar review
     def edit_review(self, **kwargs):
         for key, value in kwargs.items():
-            if hasattr(self, key) and key not in ["id", "user", "place"]:
+            if hasattr(self, key) and key not in ["id", "user_id", "place_id"]:
                 setattr(self, key, value)
         self.save()
 

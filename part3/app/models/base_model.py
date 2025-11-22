@@ -1,9 +1,3 @@
-#!/usr/bin/python3
-"""
-BaseModel module
-Define all common attributes and methods for other models
-"""
-
 from datetime import datetime
 import uuid
 from app import db
